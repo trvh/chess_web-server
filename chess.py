@@ -5,15 +5,15 @@ import json
 
 class MsgTypes(Enum):
 	
-	LIST_PLAYERS = 0
+	NEW_GAME = 0
 	UPDATE_LIST = 1
-	ADD_PLAYER = 2
-	REMOVE_PLAYER = 3
-	NEW_GAME = 4
-	BREAK_WAIT = 5
-	CONNECT = 6
-	START_GAME = 7
-	MAKE_MOVE = 8
+	BREAK_WAIT = 2
+	CONNECT = 3
+	MAKE_MOVE = 4
+	LIST_PLAYERS = 5
+	ADD_PLAYER = 6
+	REMOVE_PLAYER = 7
+	START_GAME = 8
 	BREAK_GAME = 9
 	UPDATE_BOARD = 10
 
@@ -72,71 +72,18 @@ class Chess:
 		player.write_message(msg)
 	
 	def get_message(self, player, msg):
-		msg = json.loads(msg)
-		msg_type = msg['type']
+		msg   = json.loads(msg)
+		index = msg['type']
 		
-		if msg_type == MsgTypes.NEW_GAME.value:
-			# create new party and notify other players
-			id_player = id(player)
-			self.searchers.pop(id_player) # remove player
-			self.parties[id_player] = player
-			self.state_players[id_player] = (StatePlayer.WAIT.value, )
-
-			dispatch = create_msg(MsgTypes.ADD_PLAYER.value, id_player)
-			self.send_msg_players(dispatch)
-		
-		elif msg_type == MsgTypes.UPDATE_LIST.value:
-			self.send_list_parties(player)
-		
-		elif msg_type == MsgTypes.BREAK_WAIT.value:
-			id_player = id(player)
-			self.parties.pop(id_player) # remove player
-			self.send_dispatch(id_player)
-			self.searchers[id_player] = player
-			self.state_players[id_player] = (StatePlayer.SEARCH.value, )
-			self.send_list_parties(player)
-		
-		elif msg_type == MsgTypes.CONNECT.value:
-			id_player  = id(player)
-			id_creator = int(msg['content'])
-			creator = self.parties.pop(id_creator)
-			self.searchers.pop(id_player) # remove player
-
-			party    = Party(white=creator, black=player)
-			id_party = party.get_id()
-			self.games[id_party] = party
-
-			new_state = (StatePlayer.PLAY.value, id_party, ) 
-			self.state_players[id_player]  = new_state
-			self.state_players[id_creator] = new_state
-			
-			self.send_dispatch(id_creator)
-			
-			state = {
-				'id_party': id_party,
-				'colour': ColourTypes.LIGHT.value,
-			}
-			msg = create_msg(MsgTypes.START_GAME.value, state)
-			creator.write_message(msg)
-			
-			state['colour'] = ColourTypes.DARK.value
-			msg = create_msg(MsgTypes.START_GAME.value, state)
-			player.write_message(msg)
-		
-		elif msg_type == MsgTypes.MAKE_MOVE.value:
-			content  = msg['content']
-			id_party = content['id_party']
-			move     = content['move']
-			party    = self.games[id_party]
-			partner  = party.get_partner(player)
-			party.make_move(player, move)
-
-			msg = create_msg(MsgTypes.UPDATE_BOARD.value, move)
-			player.write_message(msg)
-			partner.write_message(msg)
-
+		handlers = self.handlers
+		if (index >= 0) and (index < len(handlers)):
+			handler = handlers[index]
+			try:
+				handler(self, player, msg)
+			except Exception as error:
+				stderr.write('Error ' + str(error) + '\n')
 		else:
-			stderr('Unknow message\n')
+			stderr.write('Unknow message\n')
 
 	def send_dispatch(self, id_creator):
 		dispatch = create_msg(MsgTypes.REMOVE_PLAYER.value, id_creator)
@@ -171,13 +118,85 @@ class Chess:
 		self.state_players.pop(id_player)
 
 
+def new_game_handler(self, player, msg):
+	# create new party and notify other players
+	id_player = id(player)
+	self.searchers.pop(id_player) # remove player
+	self.parties[id_player] = player
+	self.state_players[id_player] = (StatePlayer.WAIT.value, )
+
+	dispatch = create_msg(MsgTypes.ADD_PLAYER.value, id_player)
+	self.send_msg_players(dispatch)
+
+
+def update_list_handler(self, player, msg):
+	self.send_list_parties(player)
+
+
+def break_wait_handler(self, player, msg):
+	id_player = id(player)
+	self.parties.pop(id_player) # remove player
+	self.send_dispatch(id_player)
+	self.searchers[id_player] = player
+	self.state_players[id_player] = (StatePlayer.SEARCH.value, )
+	self.send_list_parties(player)
+
+
+def connect_handler(self, player, msg):
+	id_player  = id(player)
+	id_creator = int(msg['content'])
+	creator = self.parties.pop(id_creator)
+	self.searchers.pop(id_player) # remove player
+
+	party    = Party(white=creator, black=player)
+	id_party = party.get_id()
+	self.games[id_party] = party
+
+	new_state = (StatePlayer.PLAY.value, id_party, ) 
+	self.state_players[id_player]  = new_state
+	self.state_players[id_creator] = new_state
+	
+	self.send_dispatch(id_creator)
+	
+	state = {
+		'id_party': id_party,
+		'colour': ColourTypes.LIGHT.value,
+	}
+	msg = create_msg(MsgTypes.START_GAME.value, state)
+	creator.write_message(msg)
+	
+	state['colour'] = ColourTypes.DARK.value
+	msg = create_msg(MsgTypes.START_GAME.value, state)
+	player.write_message(msg)
+
+
+def make_move_handler(self, player, msg):
+	content  = msg['content']
+	id_party = content['id_party']
+	move     = content['move']
+	party    = self.games[id_party]
+	partner  = party.get_partner(player)
+	party.make_move(player, move)
+
+	msg = create_msg(MsgTypes.UPDATE_BOARD.value, move)
+	player.write_message(msg)
+	partner.write_message(msg)
+
+
 def get_handlers():
+	return (
+		new_game_handler,
+		update_list_handler,
+		break_wait_handler,
+		connect_handler,
+		make_move_handler,
+	)
+
+
+class BreakOrderError(Exception):
 	pass
 
-class Party:
-	
-	class BreakOrderError(Exception):
-		pass
+class Party:	
 	
 	def __init__(self, white, black):
 		self.white = white

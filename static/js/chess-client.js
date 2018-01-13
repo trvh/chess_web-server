@@ -30,15 +30,15 @@ $(document).ready(function() {
 
 function Chess(socket) {
 	var MsgTypes = {
-		LIST_PLAYERS: 0,
+		NEW_GAME: 0,
 		UPDATE_LIST: 1,
-		ADD_PLAYER: 2,
-		REMOVE_PLAYER: 3,
-		NEW_GAME: 4,
-		BREAK_WAIT: 5,
-		CONNECT: 6,
-		START_GAME: 7,
-		MAKE_MOVE: 8,
+		BREAK_WAIT: 2,
+		CONNECT: 3,
+		MAKE_MOVE: 4,
+		LIST_PLAYERS: 5,
+		ADD_PLAYER: 6,
+		REMOVE_PLAYER: 7,
+		START_GAME: 8,
 		BREAK_GAME: 9,
 		UPDATE_BOARD: 10,
 	};
