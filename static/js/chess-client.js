@@ -156,13 +156,13 @@ function Dom(game) {
 		clear_list();
 		var table = $('#table_parties');
 		for (var i = 0; i < players.length; i++) {
-			var record = '<li id=\"' + players[i] + '\">Anonym</li>';
+			var record = '<li id=\"' + players[i] + '\">Chess party</li>';
 			table.append(record);
 		}
 	};
 
 	this.add_player = function(player) {
-		var record = '<li id=\"' + player + '\">Anonym</li>';
+		var record = '<li id=\"' + player + '\">Chess party</li>';
 		$('#table_parties').append(record);
 	};
 

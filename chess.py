@@ -96,7 +96,7 @@ class Chess:
 				
 	def remove_player(self, player):
 		id_player = id(player)
-		state = self.state_players[id_player]
+		state = self.state_players.pop(id_player)
 		state_type = state[0]
 
 		if state_type == StatePlayer.SEARCH.value:
@@ -113,9 +113,8 @@ class Chess:
 			msg = create_msg(MsgTypes.BREAK_GAME.value)
 			partner.write_message(msg)
 			id_partner = id(partner)
-			self.searchers[id_partner] = partner
-
-		self.state_players.pop(id_player)
+			self.state_players[id_partner] = (StatePlayer.SEARCH.value, )
+			self.searchers[id_partner]     = partner
 
 
 def new_game_handler(self, player, msg):
