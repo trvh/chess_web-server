@@ -60,23 +60,18 @@ function Chess(socket) {
 		var dom = this.dom;
 		switch (msg.type) {
 			case MsgTypes.ADD_PLAYER:
-				console.log("Add player");
 				dom.add_player(msg.content);
 				break;
 			case MsgTypes.LIST_PLAYERS:
-				console.log("Update list");
 				dom.update_list(msg.content);
 				break;
 			case MsgTypes.START_GAME:
-				console.log("Start game");
 				dom.start_game(msg.content);
 				break;
 			case MsgTypes.REMOVE_PLAYER:
-				console.log("Remove player");
 				dom.remove_player(msg.content);
 				break;
 			case MsgTypes.BREAK_GAME:
-				console.log("Break game");
 				dom.clear();
 				break;
 			case MsgTypes.UPDATE_BOARD:
@@ -129,24 +124,20 @@ function Dom(game) {
 	var self = this; // save access for event handlers
 	
 	this.init = function() {
-		// visible table for search party
 		$('#search_game').css("display", "block");
 		
 		// bind handlers on elements of DOM
 		$('#table_parties').bind("click", function(event) {
 			var id_party = event.target.id;
-			console.log('Click table, id_party = ' + id_party);
 			self.game.connect(id_party);
 		});
 		
 		$('#button_create_party').bind("click", function(event) {
-			console.log('Click button, create party');
 			self.game.create_party();
 			self.wait_partner();
 		});
 		
 		$('#button_return_to_search').bind("click", function(event) {
-			console.log('Click button, return to search');
 			self.game.break_wait();
 			clear_list();
 			$('#wait_partner').css("display", "none");
@@ -188,17 +179,13 @@ function Dom(game) {
 		$('#search_game').css("display", "none");
 		$('#wait_partner').css("display", "none");
 		$('#game').css("display", "block");
-		
 		this.board.init(msg);
 	};
 
 	this.clear = function() {
-		console.log('Clear dom');
-
 		$('#game').css("display", "none");
 		clear_list(); // remove old list of parties
 		this.game.get_list_parties();
-		
 		$('#search_game').css("display", "block");
 	};
 
@@ -250,9 +237,7 @@ function Board(game) {
 			var update = reflect(x, y, colour);
 			x = update[0];
 			y = update[1];
-			
 			var figure = self.board[x][y];
-			console.log('Click on chess board, w = ' + x + ' ,h = ' + y);
 			
 			if (self.select !== null) {
 				if ((figure !== null) && (figure.colour === colour)) {
@@ -316,9 +301,8 @@ function Board(game) {
 			var figure = figures[i],
 			x = figure.x,
 			y = figure.y,
-			colour_figure = figure.colour,
 			type = figure.get_type(),
-			img = images[type][colour_figure];
+			img = images[type][figure.colour];
 			
 			var update = reflect(x, y, colour);
 			x = update[0];
@@ -335,13 +319,13 @@ function Board(game) {
 		new_x = move[2],
 		new_y = move[3];
 
-		var elem = board[new_x][new_y];
-		if (elem !== null) {
-			// remove element
-			var i = figures.indexOf(elem);
+		var figure = board[new_x][new_y];
+		if (figure !== null) {
+			// remove figure
+			var i = figures.indexOf(figure);
 			figures.splice(i, 1);
 		}
-		var figure = board[old_x][old_y];
+		figure = board[old_x][old_y];
 		board[old_x][old_y] = null;
 		figure.x = new_x;
 		figure.y = new_y;

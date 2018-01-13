@@ -276,6 +276,7 @@ def insert_figures(board, figures):
 		y = figure.y
 		board[x][y] = figure
 
+
 class Figure:
 	
 	def __init__(self, x, y, colour):
