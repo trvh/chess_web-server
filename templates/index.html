@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+	<script src="static/js/jquery-3.2.1.js"></script>
+	<script type="text/javascript" src="static/js/chess-client.js"></script>
+	<link rel="stylesheet" type="text/css" href="static/css/style.css"/>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<title>Chess</title>
+</head>
+<body>
+	<div id="header">
+		<h1>Chess</h1>
+	</div>
+	<div id="content">
+		<div id="search_game">
+			<div id="button_create_party">Create a new party</div>
+			<div>
+				<h2>List of current parties</h2>
+				<ul id="table_parties"></ul>
+			</div>
+		</div>
+		<div id="wait_partner">
+			<h2>Wait of partner</h2>
+			<div id="button_return_to_search">Cancel wait</div>
+		</div>
+		<div id="game">
+			<canvas id="board" width="640" height="640"></canvas>
+			<img id="board_img" src="static/img/board.png" />
+			<img id="img_light_pawn" src="static/img/l_pawn.png" />
+			<img id="img_dark_pawn" src="static/img/d_pawn.png" />
+			<img id="img_light_rook" src="static/img/l_rook.png" />
+			<img id="img_dark_rook" src="static/img/d_rook.png" />
+			<img id="img_light_bishop" src="static/img/l_bishop.png" />
+			<img id="img_dark_bishop" src="static/img/d_bishop.png" />
+			<img id="img_light_knight" src="static/img/l_knight.png" />
+			<img id="img_dark_knight" src="static/img/d_knight.png" />
+			<img id="img_light_queen" src="static/img/l_queen.png" />
+			<img id="img_dark_queen" src="static/img/d_queen.png" />
+			<img id="img_light_king" src="static/img/l_king.png" />
+			<img id="img_dark_king" src="static/img/d_king.png" />
+		</div>
+	</div>
+</body>
+</html>
