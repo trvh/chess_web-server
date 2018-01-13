@@ -223,15 +223,19 @@ function Board(game) {
 		KING: 5,
 	};
 
-	this.game    = game;
-	this.ctx     = $('#board')[0].getContext('2d');
-	this.elems   = get_elements();
-	this.board   = get_board();
-	this.figures = null;
-	this.state   = null; // id_party, colour
-	this.select  = null;
-	this.lock    = false;
-	this.my_move = false;
+	var BOARD_SIZE = 640;
+	var CELL_SIZE  = 80;
+
+	this.game     = game;
+	this.ctx      = $('#board')[0].getContext('2d');
+	this.images   = get_images();
+	this.board    = get_board();
+	this.figures  = null;
+	this.id_party = null;
+	this.colour   = null;
+	this.select   = null;
+	this.lock     = false;
+	this.my_move  = false;
 
 	var self = this;
 
@@ -239,10 +243,10 @@ function Board(game) {
 		if (!self.lock) {
 			var x = event.offsetX, y = event.offsetY;
 			
-			x = Math.floor(x / 80);
-			y = Math.floor(y / 80);
+			x = Math.floor(x / CELL_SIZE);
+			y = Math.floor(y / CELL_SIZE);
 			
-			var colour = self.state.colour;
+			var colour = self.colour;
 			var update = reflect(x, y, colour);
 			x = update[0];
 			y = update[1];
@@ -257,7 +261,7 @@ function Board(game) {
 				} else {
 					// player make a move
 					var msg = {
-						'id_party': self.state.id_party,
+						'id_party': self.id_party,
 						'move': [self.select.x, self.select.y, x, y],
 					};
 					self.game.make_move(msg);
@@ -274,11 +278,12 @@ function Board(game) {
 	this.init = function(msg) {
 		console.log('Initialize board');
 		
-		this.state   = msg;
-		this.select  = null;
-		this.my_move = (msg.colour === ColourTypes.LIGHT) ? true : false;
-		this.lock    = (msg.colour === ColourTypes.DARK) ? true : false;
-		this.figures = get_figures();
+		this.id_party = msg.id_party;
+		this.colour   = msg.colour;
+		this.select   = null;
+		this.my_move  = (msg.colour === ColourTypes.LIGHT) ? true : false;
+		this.lock     = (msg.colour === ColourTypes.DARK) ? true : false;
+		this.figures  = get_figures();
 		
 		board   = this.board;
 		figures = this.figures;
@@ -299,31 +304,28 @@ function Board(game) {
 	this.draw = function() {
 		var ctx = this.ctx,
 		figures = this.figures,
-		state   = this.state,
-		elems   = this.elems,
-		colour  = state.colour,
-		board   = elems.board;
+		colour  = this.colour,
+		images  = this.images;
 		
-		ctx.drawImage(board.img, 0, 0, board.width, board.height);
-		draw_figures(ctx, figures, colour, elems);
+		ctx.drawImage(images.board, 0, 0, BOARD_SIZE, BOARD_SIZE);
+		draw_figures(ctx, figures, colour, images);
 	};
 
-	function draw_figures(ctx, figures, colour, elems) {
+	function draw_figures(ctx, figures, colour, images) {
 		for (var i = 0, n = figures.length; i < n; i++) {
 			var figure = figures[i],
 			x = figure.x,
 			y = figure.y,
 			colour_figure = figure.colour,
 			type = figure.get_type(),
-			elem = elems[type],
-			img = elem.img[colour_figure];
+			img = images[type][colour_figure];
 			
 			var update = reflect(x, y, colour);
 			x = update[0];
 			y = update[1];
-			
-			var width = elem.width, height = elem.height;
-			ctx.drawImage(img, x * width, y * height, width, height);
+			x = x * CELL_SIZE;
+			y = y * CELL_SIZE;
+			ctx.drawImage(img, x, y, CELL_SIZE, CELL_SIZE);
 		}
 	};
 	
@@ -401,52 +403,42 @@ function Board(game) {
 		return [x, y];
 	};
 
-	function get_elements() {
-		var elements = {};
+	function get_images() {
+		var images = {};
 
-		elements.board = {
-			'img': $('#board_img')[0], 
-			'width': 640,
-			'height': 640,
-		};
+		images.board = $('#board_img')[0];
 
-		elements[FigureTypes.PAWN] = {
-			'img': [$('#img_light_pawn')[0], $('#img_dark_pawn')[0]],
-			'width': 80,
-			'height': 80,
-		};
+		images[FigureTypes.PAWN] = [
+			$('#img_light_pawn')[0], 
+			$('#img_dark_pawn')[0],
+		];
 		
-		elements[FigureTypes.ROOK] = {
-			'img': [$('#img_light_rook')[0], $('#img_dark_rook')[0]],
-			'width': 80,
-			'height': 80,
-		};
+		images[FigureTypes.ROOK] = [
+			$('#img_light_rook')[0], 
+			$('#img_dark_rook')[0],
+		];
 		
-		elements[FigureTypes.BISHOP] = {
-			'img': [$('#img_light_bishop')[0], $('#img_dark_bishop')[0]],
-			'width': 80,
-			'height': 80,
-		};
+		images[FigureTypes.BISHOP] = [
+			$('#img_light_bishop')[0],
+			$('#img_dark_bishop')[0],
+		];
 		
-		elements[FigureTypes.KNIGHT] = {
-			'img': [$('#img_light_knight')[0], $('#img_dark_knight')[0]],
-			'width': 80,
-			'height': 80,
-		};
+		images[FigureTypes.KNIGHT] = [
+			$('#img_light_knight')[0],
+			$('#img_dark_knight')[0],
+		];
 		
-		elements[FigureTypes.QUEEN] = {
-			'img': [$('#img_light_queen')[0], $('#img_dark_queen')[0]],
-			'width': 80,
-			'height': 80,
-		};
+		images[FigureTypes.QUEEN] = [
+			$('#img_light_queen')[0],
+			$('#img_dark_queen')[0],
+		];
 		
-		elements[FigureTypes.KING] = {
-			'img': [$('#img_light_king')[0], $('#img_dark_king')[0]],
-			'width': 80,
-			'height': 80,
-		};
+		images[FigureTypes.KING] = [
+			$('#img_light_king')[0],
+			$('#img_dark_king')[0],
+		];
 
-		return elements;
+		return images;
 	};
 
 	function Pawn(x, y, colour) {
