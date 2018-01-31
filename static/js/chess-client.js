@@ -56,8 +56,8 @@ function Chess(socket) {
 	};
 	
 	this.get_message = function(msg) {
-		msg = JSON.parse(msg);
 		var dom = this.dom;
+		msg = JSON.parse(msg);
 		switch (msg.type) {
 			case MsgTypes.ADD_PLAYER:
 				dom.add_player(msg.content);
@@ -155,8 +155,8 @@ function Dom(game) {
 	this.update_list = function(players) {
 		clear_list();
 		var table = $('#table_parties');
-		for (var i = 0; i < players.length; i++) {
-			var record = '<li id=\"' + players[i] + '\">Chess party</li>';
+		for (var i = 0, n = players.length; i < n; i++) {
+			var record = '<li id=\"' + players[i] + '\">New chess party</li>';
 			table.append(record);
 		}
 	};
@@ -167,7 +167,7 @@ function Dom(game) {
 	};
 
 	this.remove_player = function(player) {
-		$('#' + player).remove();	
+		$('#' + player).remove();
 	};
 
 	this.wait_partner = function() {
@@ -184,7 +184,7 @@ function Dom(game) {
 
 	this.clear = function() {
 		$('#game').css("display", "none");
-		clear_list(); // remove old list of parties
+		clear_list();
 		this.game.get_list_parties();
 		$('#search_game').css("display", "block");
 	};
@@ -205,20 +205,20 @@ function Board(game) {
 		PAWN: 0,
 		ROOK: 1,
 		BISHOP: 2,
-		KINGHT: 3,
+		KNIGHT: 3,
 		QUEEN: 4,
 		KING: 5,
 	};
-
-	var BOARD_SIZE = 640;
-	var CELL_SIZE  = 80;
+	
+	var BOARD_SIZE = $('#board')[0].height;
+	var NCELLS     = 8; // number cells on chess board
+	var CELL_SIZE  = Math.floor(BOARD_SIZE / NCELLS);
 
 	this.game     = game;
 	this.ctx      = $('#board')[0].getContext('2d');
 	this.images   = get_images();
 	this.board    = get_board();
 	this.figures  = null;
-	this.id_party = null;
 	this.colour   = null;
 	this.select   = null;
 	this.lock     = false;
@@ -228,17 +228,15 @@ function Board(game) {
 
 	$('#board').bind("click", function(event) {
 		if (!self.lock) {
-			var x = event.offsetX, y = event.offsetY;
-			
-			x = Math.floor(x / CELL_SIZE);
-			y = Math.floor(y / CELL_SIZE);
+			var x = Math.floor(event.offsetX / CELL_SIZE);
+			var y = Math.floor(event.offsetY / CELL_SIZE);
 			
 			var colour = self.colour;
-			var update = reflect(x, y, colour);
+			var update = invert(x, y, colour);
 			x = update[0];
 			y = update[1];
-			var figure = self.board[x][y];
 			
+			var figure = self.board[x][y];
 			if (self.select !== null) {
 				if ((figure !== null) && (figure.colour === colour)) {
 					// player change own choose
@@ -246,7 +244,6 @@ function Board(game) {
 				} else {
 					// player make a move
 					var msg = {
-						'id_party': self.id_party,
 						'move': [self.select.x, self.select.y, x, y],
 					};
 					self.game.make_move(msg);
@@ -263,7 +260,6 @@ function Board(game) {
 	this.init = function(msg) {
 		console.log('Initialize board');
 		
-		this.id_party = msg.id_party;
 		this.colour   = msg.colour;
 		this.select   = null;
 		this.my_move  = (msg.colour === ColourTypes.LIGHT) ? true : false;
@@ -304,11 +300,10 @@ function Board(game) {
 			type = figure.get_type(),
 			img = images[type][figure.colour];
 			
-			var update = reflect(x, y, colour);
-			x = update[0];
-			y = update[1];
-			x = x * CELL_SIZE;
-			y = y * CELL_SIZE;
+			var update = invert(x, y, colour);
+			x = update[0] * CELL_SIZE;
+			y = update[1] * CELL_SIZE;
+			
 			ctx.drawImage(img, x, y, CELL_SIZE, CELL_SIZE);
 		}
 	};
@@ -333,7 +328,7 @@ function Board(game) {
 	};
 
 	function get_board() {
-		for (var i = 0, board = []; i < 8; i++)
+		for (var i = 0, board = []; i < NCELLS; i++)
 			board.push([null, null, null, null, null, null, null, null]);
 		return board;
 	};
@@ -341,16 +336,16 @@ function Board(game) {
 	function get_figures() {
 		var figures = [];
 
-		for (var i = 0; i < 8; i++)
+		for (var i = 0; i < NCELLS; i++)
 			push_figures(figures, Pawn, i, 1, 6)
 		
-		for (var i = 0; i < 8; i += 7)
+		for (var i = 0; i < NCELLS; i += 7)
 			push_figures(figures, Rook, i, 0, 7)
 		
-		for (var i = 1; i < 8; i += 5)
+		for (var i = 1; i < NCELLS; i += 5)
 			push_figures(figures, Knight, i, 0, 7)
 		
-		for (var i = 2; i < 8; i += 3)
+		for (var i = 2; i < NCELLS; i += 3)
 			push_figures(figures, Bishop, i, 0, 7)
 		
 		push_figures(figures, Queen, 3, 0, 7)
@@ -365,8 +360,8 @@ function Board(game) {
 	}
 
 	function set_null_board(board) {
-		for (var i = 0; i < 8; i++)
-			for (var j = 0; j < 8; j++)
+		for (var i = 0; i < NCELLS; i++)
+			for (var j = 0; j < NCELLS; j++)
 				board[i][j] = null;
 	};
 
@@ -378,7 +373,7 @@ function Board(game) {
 		}
 	};
 
-	function reflect(x, y, colour) {
+	function invert(x, y, colour) {
 		if (colour === ColourTypes.LIGHT) {
 			y = 7 - y;
 		} else {
