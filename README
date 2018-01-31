@@ -1,0 +1,12 @@
+Chess web-server:
+
+Technologies:
+1) Backend of application was written in Python on framework Tornado.
+2) Fronted of application was written in JavaScript  with use of jQuery.
+3) Draw of chess board do with WebGL.
+4) Protocol of Websocket is used for exchange of messages between clients 
+and server.
+
+TODO:
+1) To implement in application all chess rules.
+2) Add check of messages on server.
